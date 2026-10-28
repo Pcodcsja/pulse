@@ -34,9 +34,13 @@ int Popup(AppState& s,std::vector<ui::FluentMenuItem> items) {
     s.menu->SetTheme(s.darkMode,s.accentColor);
     POINT pt{};GetCursorPos(&pt);return s.menu->TrackPopup(pt,std::move(items));
 }
-int Dropdown(AppState& s, int index, std::vector<ui::FluentMenuItem> items) {
+int Dropdown(AppState& s, int index, std::vector<ui::FluentMenuItem> items, int max_rows = 0) {
     if(!EnsureMenu(s)) return 0;
     s.menu->SetTheme(s.darkMode,s.accentColor);
+    // A long list (every installed family) sizes to the rows shown and scrolls,
+    // like the search history, instead of turning into a sheet that swallows
+    // the page it was opened from.
+    s.menu->SetMaxVisibleRows(max_rows);
     const auto r=s.renderer.SettingsDropdownBounds(BuildVm(s,false),index,
         static_cast<float>(s.compositor.Width()),static_cast<float>(s.compositor.Height()));
     POINT corners[]={{static_cast<LONG>(std::lround(r.left)),static_cast<LONG>(std::lround(r.top))},
@@ -449,7 +453,7 @@ bool HandleSettingsControl(AppState& s,const H& hit) {
                 if(!families[i].value.empty()) item.text=families[i].label;
                 items.push_back(std::move(item));
             }
-            int command=Dropdown(s,hit.index,std::move(items));if(command>=1 && command<=count) s.settings.UiFontFamily(families[command-1].value);
+            int command=Dropdown(s,hit.index,std::move(items),12);if(command>=1 && command<=count) s.settings.UiFontFamily(families[command-1].value);
         }
         break;
     }
